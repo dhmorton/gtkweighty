@@ -523,7 +523,7 @@ int launch_browser(char *mdir, int flag)//if the flag is nonzero file fetching i
  */
 void create_tag_model_new(char flag, int num_fields, char **fields)
 {
-	printf("%c\tCREATE TAG MODEL NEW\n", flag);
+	printf("%c\tCREATE TAG MODEL NEW %d\n", flag, num_fields);
 	tag_tv_columns *col;
 	if (flag == 'F')
 		col = tag_col;
@@ -862,7 +862,6 @@ void populate_list_file_tv(char *file, int weight, int sticky, int i)
 {
 	populate_tv(list_file_tv, file, weight, sticky, i, 2);
 }
-
 void populate_tag_tv(tag_data **data, int i, int num_fields)
 {
 	if (tag_tv_flag == 0)
@@ -1040,7 +1039,7 @@ void change_weight_selected(GtkButton *button, GdkEventButton *event)
 	if (change)
 	{
 		GtkTreeModel *model;
-		GList *list;
+		GList *list = NULL;
 		if (button == GTK_BUTTON(up_but_sel) || button == GTK_BUTTON(down_but_sel))
 			list = g_list_first(gtk_tree_selection_get_selected_rows(gtk_tree_view_get_selection(GTK_TREE_VIEW(file_tv)), &model));
 		else if (button == GTK_BUTTON(list_song_up_but) || button == GTK_BUTTON(list_song_down_but))
@@ -1247,7 +1246,7 @@ void clear_queue(GtkButton *button, GdkEventButton *event)
 		int count = 0;
 		char clear[32767*4];//average 4 chars for a very long list?
 		char *pclear = &clear[0];
-		int len;
+		int len = 0;
 		while (list != NULL)
 		{
 			GtkTreePath* path = list->data;

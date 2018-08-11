@@ -177,35 +177,62 @@ void flush_buffer()
 //FIXME: Rewrite this POS
 void parse_data()
 {
-	//print_data(pbuf, data_buf_len - bytes_parsed);
+	//if(*pbuf != 'B')
+		//print_data(pbuf, data_buf_len - bytes_parsed);
 	char c = *pbuf;
 	pbuf++; bytes_parsed++;
+	data_flag = '\0';
 	if (c == 'A')//field data
-			parse_song_data();
+	{
+		data_flag = 'A';
+		parse_song_data();
+	}
 	else if (c == 'B')//update progressbar
 		parse_progressbar_data();
 	else if (c == 'C')//get config
 		parse_config();
 	else if (c == 'D')//field list data
+	{
+		data_flag = 'D';
 		parse_song_data();
+	}
 	else if (c == 'E')//list of fields
+	{
+		data_flag = 'E';
 		parse_list_of_fields();
+	}
 	else if (c == 'F')//data for file_tv
+	{
+		data_flag = 'F';
 		parse_song_data();
+	}
 	else if (c == 'G')//tag_tv data
 	{
+		data_flag = 'G';
 		tag_data *my_data = NULL;
 		my_data = malloc(2000*sizeof(tag_data));
 		parse_tag_tv_data(&my_data);
 	}
 	else if (c == 'H')//get history
+	{
+		data_flag = 'H';
 		parse_song_data();
+	}
 	else if (c == 'I')//track list for info win
+	{
+		data_flag = 'I';
 		parse_song_data();
+	}
 	else if (c == 'J')//parse stream history
+	{
+		data_flag = 'J';
 		parse_stream_history();
+	}
 	else if (c == 'K')//parse update history data
+	{
+		data_flag = 'K';
 		parse_song_data();
+	}
 	else if (c == 'L')//highlight playlist
 		parse_highlight_playlist();
 	else if (c == 'M')//parse time data
@@ -215,9 +242,15 @@ void parse_data()
 	else if (c == 'O')//set stream metadata
 		parse_add_stream_data();
 	else if (c == 'P')//data for pl_tv
+	{
+		data_flag = 'P';
 		parse_song_data();
+	}
 	else if (c == 'Q')//get search results
+	{
+		data_flag = 'Q';
 		parse_song_data();
+	}
 	else if (c == 'R')//parse songs remaining data
 		parse_remaining();
 	else if (c == 'S')//get stats
@@ -303,7 +336,7 @@ void parse_stream_data()
 }
 void parse_song_data()
 {
-//	printf("parse song data\n");
+	printf("parse song data\n");
 	int songs_left, weight, sticky;
 	char file[4096];
 	if (count_nts(4))
@@ -311,7 +344,7 @@ void parse_song_data()
 		songs_left = get_num_from_buf();
 		if (song_total_holder < 0)
 			song_total_holder = songs_left + 1;
-//		printf("songs left = %d\n", songs_left);
+		printf("songs left = %d\n", songs_left);
 		int i = song_total_holder - songs_left - 1;
 		sticky = get_num_from_buf();
 		weight = get_num_from_buf();
@@ -602,7 +635,7 @@ int parse_tag_data()
 }
 void parse_update()
 {
-	int flag;
+	int flag = -1;
 	if (*pbuf == 'A')//added
 		flag = 0;
 	else if (*pbuf == 'D')//deleted
