@@ -574,7 +574,18 @@ void create_tag_model_new(char flag, int num_fields, char **fields)
 	for (i = 6; i < num_fields; i++)
 	{
 		char trfield[64];
-		translate_field(fields[i], trfield);
+		GError *error = NULL;
+		g_locale_to_utf8(fields[i], -1, NULL, NULL, &error);
+		if(error)
+		{
+			//printf("%s\n", error->message);
+			g_error_free(error);
+			continue;
+		}
+		else
+		{
+			translate_field(fields[i], trfield);
+		}
 		if (	(strcasecmp(trfield, "Track #") == 0) ||
 				(strcasecmp(trfield, "Artist") == 0) ||
 				(strcasecmp(trfield, "Title") == 0) ||

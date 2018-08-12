@@ -336,7 +336,7 @@ void parse_stream_data()
 }
 void parse_song_data()
 {
-	printf("parse song data\n");
+	//printf("parse song data\n");
 	int songs_left, weight, sticky;
 	char file[4096];
 	if (count_nts(4))
@@ -344,7 +344,7 @@ void parse_song_data()
 		songs_left = get_num_from_buf();
 		if (song_total_holder < 0)
 			song_total_holder = songs_left + 1;
-		printf("songs left = %d\n", songs_left);
+		//printf("songs left = %d\n", songs_left);
 		int i = song_total_holder - songs_left - 1;
 		sticky = get_num_from_buf();
 		weight = get_num_from_buf();

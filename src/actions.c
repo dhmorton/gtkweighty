@@ -273,13 +273,33 @@ void populate_tv(GtkWidget* tv, char *song, int weight, int sticky, int i, int f
 	}
 	//else if (flag == 3)
 	//	;//do nothing
-	printf("set list store %s | %s\n", song, file);
-	gtk_list_store_set(GTK_LIST_STORE(model), &iter,
+	//printf("set list store %s | %s\n", song, file);
+	/*
+	 * Some strings will not deign to be converted to utf8 for some reason
+	 * If they won't, just put in what's there and ignore the warnings.
+	 */
+	GError *error = NULL;
+	gchar *gsong = g_locale_to_utf8(song, -1, NULL, NULL, &error);
+	if(gsong == NULL)
+	{
+		//printf("%s\n", error->message);
+		g_error_free(error);
+		gtk_list_store_set(GTK_LIST_STORE(model), &iter,
 						INDEX, i+1,
 						STICKY, sticky,
 						WEIGHT, weight,
 						FILENAME, song,
 						FULLPATH, file, -1);
+	}
+	else
+	{
+		gtk_list_store_set(GTK_LIST_STORE(model), &iter,
+						INDEX, i+1,
+						STICKY, sticky,
+						WEIGHT, weight,
+						FILENAME, gsong,
+						FULLPATH, file, -1);
+	}
 	free(file);
 }
 void update_progressbar(int permil)
