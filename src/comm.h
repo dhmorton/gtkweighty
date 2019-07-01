@@ -21,7 +21,7 @@
 
 #include "playing.h"//for the struct tag_data
 
-#define BUFF 32767
+#define BUFF 65536
 #define BIGBUFF 2000000
 #define PORT 23529
 

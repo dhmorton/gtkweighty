@@ -369,6 +369,7 @@ void build_main_window()
 	g_signal_connect(vol, "value-changed", G_CALLBACK(change_volume), NULL);
 	g_signal_connect(G_OBJECT(pbar), "button-release-event", G_CALLBACK(end_change_pos), NULL);
 
+
 	gtk_widget_show_all(win);
 	printf("artist height = %d\n", gtk_widget_get_allocated_height(art_entry));
 	printf("title height = %d\n", gtk_widget_get_allocated_height(tit_entry));

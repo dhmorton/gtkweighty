@@ -52,6 +52,7 @@ static int get_num_from_buf(void);
 static int get_string_from_buf(char*);
 static int count_nts(int);
 static void parse_data(void);
+static void step(void);
 //parse functions
 static void parse_song_data(void);
 static int parse_tag_data(void);
@@ -113,8 +114,8 @@ void clear_data()
 gboolean handle_data(GSocket* sock, GIOCondition condition, gpointer data)
 {
 	//there is data available so get it
+	//printf("buf len = %d\n", data_buf_len);
 	check_for_data();
-//	printf("buf len = %d\n", data_buf_len);
 	while ((data_buf_len - bytes_parsed) > 0)
 	{
 		parse_data();
@@ -135,8 +136,9 @@ gssize check_for_data()
 		if (ret != -1)
 		{
 			int i;
-			for (i = recv; i < recv + ret; i++)
+			for (i = recv; i < recv + ret; i++) {
 				string[i] = buf[i - recv];
+			}
 			recv += ret;
 		}
 	}
@@ -173,12 +175,256 @@ void flush_buffer()
 	pbuf = &data_buf[0];
 	data_buf_len = bytes_parsed = 0;
 }
+//used letters: ABCDEFGHIJKLMNOPQRSTUVWXY
+void parse_data()
+{/*
+	if (*pbuf != 'B')
+	{
+		int print_len = ((data_buf_len - bytes_parsed) < 100) ? (data_buf_len - bytes_parsed) : 100;
+		print_data(pbuf, print_len);
+	}*/
+
+	//print_data(pbuf, data_buf_len - bytes_parsed);
+	if (data_flag == '\0')//a new command
+	{
+		//parse the first byte and figure out what to do with it
+		if (*pbuf == 'B')//update progressbar
+		{
+			data_flag = 'B';
+			step();
+			parse_progressbar_data();
+		}
+		else if (*pbuf == 'T')//tag data
+		{
+			data_flag = 'T';//flag the fact that we got here and drop the initial byte
+			step();
+			parse_tag_data();
+		}
+		else if (*pbuf == 'W')//weight and sticky data
+		{
+			data_flag = 'W';
+			step();
+			parse_weight_and_sticky();
+		}
+		else if (*pbuf == 'F')//data for file_tv
+		{
+			data_flag = 'F';
+			step();
+			parse_song_data();
+		}
+		else if (*pbuf == 'P')//data for pl_tv
+		{
+			data_flag = 'P';
+			step();
+			parse_song_data();
+		}
+		else if (*pbuf == 'E')//list of fields
+		{
+			data_flag = 'E';
+			step();
+			parse_list_of_fields();
+		}
+		else if (*pbuf == 'G')//tag_tv data
+		{
+			data_flag = 'G';
+			step();
+			tag_data *my_data = NULL;
+			my_data = malloc(2000*sizeof(tag_data));
+			parse_tag_tv_data(&my_data);
+		}
+		else if (*pbuf == 'C')//get config
+		{
+			data_flag = 'C';
+			step();
+			parse_config();
+		}
+		else if (*pbuf == 'H')//get history
+		{
+			data_flag = 'H';
+			step();
+			parse_song_data();
+		}
+		else if (*pbuf == 'Q')//get search results
+		{
+			data_flag = 'Q';
+			step();
+			parse_song_data();
+		}
+		else if (*pbuf == 'S')//get stats
+		{
+			data_flag = 'S';
+			step();
+			parse_stats();
+		}
+		else if (*pbuf == 'M')//parse time data
+		{
+			data_flag = 'M';
+			step();
+			parse_time();
+		}
+		else if (*pbuf == 'R')//parse songs remaining data
+		{
+			data_flag = 'R';
+			step();
+			parse_remaining();
+		}
+		else if (*pbuf == 'K')//parse update history data
+		{
+			data_flag = 'K';
+			step();
+			parse_song_data();
+		}
+		else if (*pbuf == 'L')//highlight playlist
+		{
+			data_flag = 'L';
+			step();
+			parse_highlight_playlist();
+		}
+		else if (*pbuf == 'U')//update
+		{
+			data_flag = 'U';
+			step();
+			parse_update();
+		}
+		else if (*pbuf == 'V')
+		{
+			data_flag = 'V';
+
+			step();
+			parse_volume();
+		}
+		else if (*pbuf == 'A')//field data
+		{
+			data_flag = 'A';
+
+			step();
+			parse_song_data();
+		}
+		else if (*pbuf == 'D')//field list data
+		{
+			data_flag = 'D';
+			step();
+			parse_song_data();
+		}
+		else if (*pbuf == 'I')//track list for info win
+		{
+			data_flag = 'I';
+			step();
+			parse_song_data();
+		}
+		else if (*pbuf == 'X')//lyrics
+		{
+			data_flag = 'X';
+			step();
+			parse_lyrics();
+		}
+		else if (*pbuf == 'Y')//currently playing
+		{
+			data_flag = 'Y';
+			step();
+			parse_playing();
+		}
+		else if (*pbuf == 'N')//set stream metadata
+		{
+			data_flag = 'N';
+			step();
+			parse_stream_data();
+		}
+		else if (*pbuf == 'O')//set stream metadata
+		{
+			data_flag = 'O';
+			step();
+			parse_add_stream_data();
+		}
+		else if (*pbuf == 'J')//parse stream history
+		{
+			data_flag = 'J';
+			step();
+			parse_stream_history();
+		}
+		else if (*pbuf == 'Z')//parse discogs token
+		{
+			data_flag = 'Z';
+			step();
+			parse_discogs_token();
+		}
+		else
+		{
+			printf("%c: %c is not a command\n", data_flag, *pbuf);
+			//print_data(pbuf, data_buf_len - bytes_parsed);
+			flush_buffer();
+		}
+	}
+	else if (data_flag == 'T')//deal with tag data
+		parse_tag_data();
+	else if (data_flag == 'F')
+		parse_song_data();
+	else if (data_flag == 'P')
+		parse_song_data();
+	else if (data_flag == 'E')//list of fields
+		parse_list_of_fields();
+	else if (data_flag == 'G')//deal with tag data
+	{
+		tag_data* my_data = NULL;
+		my_data = malloc(2000*sizeof(tag_data));
+		parse_tag_tv_data(&my_data);
+	}
+	else if (data_flag == 'H')//get history
+		parse_song_data();
+	else if (data_flag == 'Q')//get search results
+		parse_song_data();
+	else if (data_flag == 'C')//get config
+		parse_config();
+	else if (data_flag == 'B')//update progressbar
+		parse_progressbar_data();
+	else if (data_flag == 'W')
+		parse_weight_and_sticky();
+	else if (data_flag == 'M')//parse time data
+		parse_time();
+	else if (data_flag == 'R')//parse remaining
+		parse_remaining();
+	else if (data_flag == 'K')
+		parse_song_data();
+	else if (data_flag == 'L')//highlight playlist
+		parse_highlight_playlist();
+	else if (data_flag == 'U')
+		parse_update();
+	else if (data_flag == 'V')//highlight playlist
+		parse_volume();
+	else if (data_flag == 'A')//parse field
+		parse_song_data();
+	else if (data_flag == 'D')//parse field entry data
+		parse_song_data();
+	else if (data_flag == 'I')
+		parse_song_data();
+	else if (data_flag == 'X')//lyrics
+		parse_lyrics();
+	else if (data_flag == 'Y')//currently playing
+		parse_playing();
+	else if (data_flag == 'N')//stream data
+		parse_stream_data();
+	else if (data_flag == 'O')//new stream data
+		parse_add_stream_data();
+	else if (data_flag == 'J')
+		parse_stream_history();
+	else if (data_flag == 'Z')//parse discogs token
+		parse_discogs_token();
+}
+//takes one step along the command buffer
+//pbuf is the read pointer along the buffer
+//bytes_parsed keeps track of how many bytes we've read for this command
+void step()
+{
+	pbuf++;
+	bytes_parsed++;
+}
+/*
 //used letters: ABCDEFGHIJKLMNOPQRSTUVWXYZ
-//FIXME: Rewrite this POS
+//FIXME: Rewrite this
 void parse_data()
 {
-	//if(*pbuf != 'B')
-		//print_data(pbuf, data_buf_len - bytes_parsed);
+	if(*pbuf != 'B')
+		print_data(pbuf, data_buf_len - bytes_parsed);
 	char c = *pbuf;
 	pbuf++; bytes_parsed++;
 	data_flag = '\0';
@@ -276,6 +522,7 @@ void parse_data()
 		flush_buffer();
 	}
 }
+*/
 void parse_add_stream_data()
 {
 	char name[256];
@@ -477,6 +724,11 @@ int parse_tag_tv_data(tag_data** data)
 		}
 //		printf("songs left = %d\n", songs_left);
 //		printf("fields = %d\n", num_fields);
+	}
+	else if(*pbuf == 0)
+	{
+		get_num_from_buf();
+		return 0;
 	}
 	else
 	{
@@ -684,12 +936,16 @@ void parse_time()
 	{
 		set_playing_time_data(msec);
 		int sec = msec / 1000;
+		int min = sec / 60;
 		int rem = sec % 60;
-		int min = (sec - rem) / 60;
+		printf("%d : %d\n", min, rem);
 		char mm[3];
 		char ss[3];
-		itoa(min, mm);
-		itoa(rem, ss);
+		snprintf(&mm[0], 3, "%d", min);
+		snprintf(&ss[0], 3, "%d", rem);
+		printf("%s : %s\n", mm, ss);
+		mm[2] = 0;
+		ss[2] = 0;
 		int i = 0;
 		time_s[i] = mm[i];
 		i++;
@@ -862,7 +1118,7 @@ int get_num_from_buf()
 		bytes_parsed++;
 		if (bytes_parsed == data_buf_len)
 			return -1;
-	} while (*pbuf != '\0');
+	} while (*pbuf != '\0' && j < 10);
 	pbuf++; j++; bytes_parsed++;
 	if (j == 0)
 		return -999;

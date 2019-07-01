@@ -274,6 +274,7 @@ void populate_tv(GtkWidget* tv, char *song, int weight, int sticky, int i, int f
 	//else if (flag == 3)
 	//	;//do nothing
 	//printf("set list store %s | %s\n", song, file);
+
 	/*
 	 * Some strings will not deign to be converted to utf8 for some reason
 	 * If they won't, just put in what's there and ignore the warnings.

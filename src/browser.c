@@ -59,7 +59,7 @@ static GtkTreeModel* create_list_model(GtkWidget*);
 static GtkTreeModel* create_stream_model(GtkWidget*);
 //browser callbacks
 static void open_dir(void);
-static void play_list_now(void);
+static void play_list_now(GtkWidget*);
 static void add_selected(GtkButton*);
 static void add_all(GtkButton*);
 static void clear_queue(GtkButton*, GdkEventButton*);
@@ -516,6 +516,7 @@ int launch_browser(char *mdir, int flag)//if the flag is nonzero file fetching i
 //	g_object_unref(list_tag_model);
 	read_stream_config();
 
+	printf("FINISHED BUILDING BROWSER\n");
 	return 0;
 }
 /*
@@ -524,7 +525,7 @@ int launch_browser(char *mdir, int flag)//if the flag is nonzero file fetching i
 void create_tag_model_new(char flag, int num_fields, char **fields)
 {
 	printf("%c\tCREATE TAG MODEL NEW %d\n", flag, num_fields);
-	tag_tv_columns *col;
+	tag_tv_columns *col = NULL;
 	if (flag == 'F')
 		col = tag_col;
 	else if (flag == 'S')
@@ -829,6 +830,10 @@ void set_cursor_on_playing_file(int flag)
 			model = gtk_tree_view_get_model(GTK_TREE_VIEW(file_tv));
 		else if (flag == 2 && list_file_tv != NULL)
 			model = gtk_tree_view_get_model(GTK_TREE_VIEW(list_file_tv));
+		else {
+			printf("set_cursor_on_playing_file no model error\n");
+			return;
+		}
 		GtkTreeIter iter;
 		if (gtk_tree_model_get_iter_first(model, &iter) && (playing_file != NULL))
 		{
@@ -965,32 +970,124 @@ void open_dir()
 	get_song_list((const char*) full_path);
 	gtk_widget_show_all(file_tv);
 }
-void play_list_now()
+//copies the full paths of every song on the list
+//and sends them to weighty to be pushed onto the playnow list
+//since the playlist plays from the head of the list
+//the list should be pushed onto the stack in reverse
+void play_list_now(GtkWidget *tv)
 {
-	char com[1000000];
-	memcpy(com, "PF", 2);
-	char *pcom = &com[2];
-	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(list_file_tv));
+	GtkTreeModel *lmodel;
+	GtkTreeIter liter;
+	gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(list_tree_tv)), &lmodel, &liter);
+	gchar *list;
+	gtk_tree_model_get(lmodel, &liter, 0, &list, -1);
+
+	GtkTreeModel *model;
+	GList *glist = g_list_first(gtk_tree_selection_get_selected_rows(gtk_tree_view_get_selection(GTK_TREE_VIEW(list_tv)), &model));
+	if (glist != NULL)
+	{
+		char com[2048];
+		memset(com, 0, 2048);
+		memcpy(com, "PF", 2);//play_playlist()
+		char *pcom = &com[2];
+		int len = 2;
+		GtkTreePath* path = glist->data;
+		GtkTreeIter iter;
+		gtk_tree_model_get_iter(model, &iter, path);
+		gchar *item;
+		gtk_tree_model_get(model, &iter, FILENAME, &item, -1);
+//		printf("list = %s\titem = %s\n", list, item);
+		if ((strcmp(list, "Album") == 0) || (strcmp(list, "Recent Albums") == 0)) {
+			memcpy(pcom, "TALB", 4);
+			pcom += 5;
+			len += 5;
+		}
+		else if ((strcmp(list, "Artist") == 0) || (strcmp(list, "Recent Artists") == 0)) {
+			memcpy(pcom, "TPE1", 4);
+			pcom += 5;
+			len += 5;
+		}
+		else if ((strcmp(list, "Genre") == 0) || (strcmp(list, "Recent Genres") == 0)) {
+			memcpy(pcom, "TCON", 4);
+			pcom += 5;
+			len += 5;
+		}
+		else//it's a subiter of one of the "Recent" lists
+		{
+			GtkTreeIter topiter;
+			if (gtk_tree_model_iter_parent(lmodel, &topiter, &liter))
+			{
+				gchar *uplist;
+				gtk_tree_model_get(lmodel, &topiter, 0, &uplist, -1);
+				printf("uplist = %s\n", uplist);
+				if (strcmp(uplist, "Recent Albums") == 0) {
+					memcpy(pcom, "TALB", 4);
+					pcom += 5;
+					len += 5;
+				}
+				else if (strcmp(uplist, "Recent Artists") == 0) {
+					memcpy(pcom, "TPE1", 4);
+					pcom += 5;
+					len += 5;
+				}
+				else if (strcmp(uplist, "Recent Genres") == 0) {
+					memcpy(pcom, "TCON", 4);
+					pcom += 5;
+					len += 5;
+				}
+				else
+					printf("no match for |%s|\n", uplist);
+			}
+			else
+				printf("iter has no parent\n");
+		}
+		memcpy(pcom, item, strlen(item) + 1);
+		len += strlen(item) + 1;
+		print_data(com, len);
+		send_command(com, len);
+		//clean up what's there now
+		gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list_file_tv))));
+		gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list_tag_col->tv))));
+		send_command(com, strlen(item) + 4);
+		g_free(item);
+		g_list_free(glist);
+	}
+
+/*	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(list_file_tv));
 	int total = gtk_tree_model_iter_n_children(model, NULL);
 	char t[6];
 	memset(t, 0, 6);
 	itoa(total, t);
-	//printf("list length = %d\n", total);
+	printf("list length = %d\n", total);
 	memcpy(pcom, t, strlen(t) + 1);
 	pcom += strlen(t) + 1;
-	GtkTreeIter iter;
-	gtk_tree_model_get_iter_first(model, &iter);
+	GtkTreeIter firstIter;
+	gtk_tree_model_get_iter_first(model, &firstIter);
 	gchar *file;
 	int len = strlen(t) + 3;
-	do
+	for(int n = total - 1; n >= 0; n--)
+	{
+		GtkTreeIter iter;
+		if(gtk_tree_model_iter_nth_child(model, &iter, NULL, n)) {
+			gtk_tree_model_get(model, &iter, FULLPATH, &file, -1);
+			memcpy(pcom, file, strlen(file) + 1);
+			pcom += strlen(file) + 1;
+			len += strlen(file) + 1;
+			printf("%s\n", file);
+		}
+		else {
+			printf("ivalid iter for %d\n", n);
+		}
+	}
+/*	do
 	{
 		gtk_tree_model_get(model, &iter, FULLPATH, &file, -1);
 		memcpy(pcom, file, strlen(file) + 1);
 		pcom += strlen(file) + 1;
 		len += strlen(file) + 1;
 	} while (gtk_tree_model_iter_next(model, &iter));
-	send_command(com, len);
-	g_free(file);
+*/
+//	g_free(file);
 }
 void add_all(GtkButton *button)
 {
@@ -1004,7 +1101,7 @@ void add_selected(GtkButton *button)
 {
 	printf("add selected\n");
 	GtkTreeModel *model;
-	GList *list;
+	GList *list = NULL;
 	if (button == GTK_BUTTON(add_sel_but) || button == GTK_BUTTON(add_all_but))
 		list = g_list_first(gtk_tree_selection_get_selected_rows(gtk_tree_view_get_selection(GTK_TREE_VIEW(file_tv)), &model));
 	else if (button == GTK_BUTTON(search_addsel_but) || button == GTK_BUTTON(search_addall_but))
@@ -1412,10 +1509,9 @@ void open_list(GtkWidget *tv)
 	}
 	gtk_tree_view_column_set_title(gtk_tree_view_get_column(GTK_TREE_VIEW(list_tv), 3), list);
 	gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list_file_tv))));
-	GtkListStore *list_tv_model = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list_tv)));
-	gtk_tree_view_set_model(GTK_TREE_VIEW(list_tv), NULL);
-	gtk_list_store_clear(list_tv_model);
-	gtk_tree_view_set_model(GTK_TREE_VIEW(list_tv), create_standard_model(list_tv));
+	gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list_tv))));
+	//gtk_tree_view_set_model(GTK_TREE_VIEW(list_tv), NULL);
+	//gtk_tree_view_set_model(GTK_TREE_VIEW(list_tv), create_standard_model(list_tv));
 	if (list_tag_col != NULL)
 		gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list_tag_col->tv))));
 
