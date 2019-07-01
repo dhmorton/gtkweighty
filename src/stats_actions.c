@@ -46,10 +46,10 @@ GtkWidget* create_stats_label()
 }
 void redraw_canvas()
 {
-	printf("redraw canvas\n");
+	//printf("redraw canvas\n");
 	if (stats_win != NULL)
 	{
-		printf("getting window size\n");
+		//printf("getting window size\n");
 		gint w = 0;
 		gint h = 0;
 		gtk_window_get_size(GTK_WINDOW(stats_win), &w, &h);
