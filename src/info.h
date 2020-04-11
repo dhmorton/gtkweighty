@@ -21,10 +21,10 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <glib-object.h>
 //openssl for signing the Amazon request
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
+//#include <openssl/hmac.h>
+//#include <openssl/evp.h>
+//#include <openssl/bio.h>
+//#include <openssl/buffer.h>
 //curl for url escaping and image downloading
 #include <curl/curl.h>
 //Imlib2 for processing images

@@ -197,7 +197,7 @@ void update_hist_tv(char *song, int weight, int sticky)
 		return;
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(hist_tv));
 	gint i = gtk_tree_model_iter_n_children(model, NULL);
-	printf("have %d rows\n", (int) i);
+	//printf("have %d rows\n", (int) i);
 	GtkTreeIter iter;
 	gtk_list_store_append(GTK_LIST_STORE(model), &iter);
 	char* file = malloc(strlen(song) + 1);
