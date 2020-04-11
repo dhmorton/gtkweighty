@@ -351,7 +351,7 @@ void parse_data()
 		else
 		{
 			printf("%c: %c is not a command\n", data_flag, *pbuf);
-			//print_data(pbuf, data_buf_len - bytes_parsed);
+			print_data(pbuf, data_buf_len - bytes_parsed);
 			flush_buffer();
 		}
 	}
@@ -911,7 +911,9 @@ void parse_update()
 }
 void parse_highlight_playlist()
 {
+	print_data(pbuf, data_buf_len);
 	int index = get_num_from_buf();
+	printf("highlight playlist index = %d\n", index);
 	highlight_playlist(index);
 	data_flag = '\0';
 	buf_shift();
@@ -938,12 +940,10 @@ void parse_time()
 		int sec = msec / 1000;
 		int min = sec / 60;
 		int rem = sec % 60;
-		printf("%d : %d\n", min, rem);
 		char mm[3];
 		char ss[3];
 		snprintf(&mm[0], 3, "%d", min);
 		snprintf(&ss[0], 3, "%d", rem);
-		printf("%s : %s\n", mm, ss);
 		mm[2] = 0;
 		ss[2] = 0;
 		int i = 0;
@@ -978,6 +978,7 @@ void parse_remaining()
 	char remaining[16];
 	memset(remaining, 0, 16);
 	get_string_from_buf(remaining);
+	printf("remaining = %s\n", remaining);
 	set_left(remaining);
 	data_flag = '\0';
 	buf_shift();
@@ -1065,11 +1066,9 @@ void parse_lyrics()
 }
 void parse_discogs_token()
 {
-	printf("parse discogs\n");
 	char token[42];
 	//token[40] = 0;
 	get_string_from_buf(token);
-	printf("Discogs token = %s\n", token);
 	discogs_token = malloc(42 * sizeof(char));
 	memcpy(discogs_token, token, 42);
 	buf_shift();

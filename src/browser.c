@@ -218,7 +218,6 @@ int launch_browser(char *mdir, int flag)//if the flag is nonzero file fetching i
 	//put it all in a table
 	GtkWidget *b_table = gtk_grid_new();
 	gtk_widget_set_name(b_pl_scroll, "weighty-b-pl-scroll");
-	gtk_grid_attach(GTK_GRID(b_table), b_tree_scroll, 0, 0, 1, 4);
 	gtk_grid_attach(GTK_GRID(b_table), b_file_nb, 1, 0, 39, 1);
 	gtk_grid_attach(GTK_GRID(b_table), pl_but_hbox, 1, 1, 39, 1);
 	gtk_grid_attach(GTK_GRID(b_table), b_pl_scroll, 1, 2, 39, 1);
@@ -227,6 +226,11 @@ int launch_browser(char *mdir, int flag)//if the flag is nonzero file fetching i
 	gtk_widget_set_hexpand(b_pl_scroll, TRUE);
 	g_object_set(b_file_nb, "expand", TRUE, NULL);
 	//g_object_set(b_pl_scroll, "expand", TRUE, NULL);
+
+	//create an adjustable split pane
+	GtkWidget *b_pane = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+	gtk_paned_add1(GTK_PANED(b_pane), b_tree_scroll);
+	gtk_paned_add2(GTK_PANED(b_pane), b_table);
 
 	//create the file pane
 	GtkWidget *file_image = gtk_image_new_from_icon_name("text-x-generic", GTK_ICON_SIZE_MENU);
@@ -265,7 +269,8 @@ int launch_browser(char *mdir, int flag)//if the flag is nonzero file fetching i
 	pl_model = create_standard_model(pl_tv);
 	gtk_tree_view_set_model(GTK_TREE_VIEW(pl_tv), pl_model);
 	gtk_container_add(GTK_CONTAINER(b_pl_scroll), pl_tv);
-	send_command("QG", 2);//show any playlist that's still around
+	send_command("QG", 2);//show any playlist that's still around	gtk_notebook_append_page_menu((GtkNotebook*) b_file_nb, b_file_scroll, file_vbox, NULL);ne
+
 
 	//create all the signals
 	g_signal_connect(tv, "cursor-changed", G_CALLBACK(open_dir), NULL);
@@ -432,8 +437,6 @@ int launch_browser(char *mdir, int flag)//if the flag is nonzero file fetching i
 	GtkWidget *list_item_down_image = gtk_image_new_from_icon_name("list-remove", GTK_ICON_SIZE_BUTTON);
 	gtk_container_add(GTK_CONTAINER(list_item_down_but), list_item_down_image);
 
-
-
 	GtkWidget *list_song_button_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_box_pack_start(GTK_BOX(list_song_button_hbox), list_song_down_but, FALSE, TRUE, 2);
 	gtk_box_pack_start(GTK_BOX(list_song_button_hbox), list_song_up_but, FALSE, TRUE, 2);
@@ -501,7 +504,8 @@ int launch_browser(char *mdir, int flag)//if the flag is nonzero file fetching i
 	g_signal_connect(G_OBJECT(stream_play_but), "clicked", G_CALLBACK(play_stream), NULL);
 	g_signal_connect(G_OBJECT(stream_rem_but), "clicked", G_CALLBACK(remove_stream), NULL);
 	//put it all together and show it
-	gtk_notebook_append_page_menu(GTK_NOTEBOOK(nb), b_table, b_vbox, NULL);
+	gtk_notebook_append_page_menu(GTK_NOTEBOOK(nb), b_pane, b_vbox, NULL);
+//	gtk_notebook_append_page_menu(GTK_NOTEBOOK(nb), b_table, b_vbox, NULL);
 	gtk_notebook_append_page_menu(GTK_NOTEBOOK(nb), search_vbox, search_tab_vbox, NULL);
 	gtk_notebook_append_page_menu(GTK_NOTEBOOK(nb), list_table, list_tab_vbox, NULL);
 	gtk_notebook_append_page_menu(GTK_NOTEBOOK(nb), stream_vbox, stream_tab_vbox, NULL);
@@ -1043,7 +1047,6 @@ void play_list_now(GtkWidget *tv)
 		}
 		memcpy(pcom, item, strlen(item) + 1);
 		len += strlen(item) + 1;
-		print_data(com, len);
 		send_command(com, len);
 		//clean up what's there now
 		gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list_file_tv))));
@@ -1052,42 +1055,6 @@ void play_list_now(GtkWidget *tv)
 		g_free(item);
 		g_list_free(glist);
 	}
-
-/*	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(list_file_tv));
-	int total = gtk_tree_model_iter_n_children(model, NULL);
-	char t[6];
-	memset(t, 0, 6);
-	itoa(total, t);
-	printf("list length = %d\n", total);
-	memcpy(pcom, t, strlen(t) + 1);
-	pcom += strlen(t) + 1;
-	GtkTreeIter firstIter;
-	gtk_tree_model_get_iter_first(model, &firstIter);
-	gchar *file;
-	int len = strlen(t) + 3;
-	for(int n = total - 1; n >= 0; n--)
-	{
-		GtkTreeIter iter;
-		if(gtk_tree_model_iter_nth_child(model, &iter, NULL, n)) {
-			gtk_tree_model_get(model, &iter, FULLPATH, &file, -1);
-			memcpy(pcom, file, strlen(file) + 1);
-			pcom += strlen(file) + 1;
-			len += strlen(file) + 1;
-			printf("%s\n", file);
-		}
-		else {
-			printf("ivalid iter for %d\n", n);
-		}
-	}
-/*	do
-	{
-		gtk_tree_model_get(model, &iter, FULLPATH, &file, -1);
-		memcpy(pcom, file, strlen(file) + 1);
-		pcom += strlen(file) + 1;
-		len += strlen(file) + 1;
-	} while (gtk_tree_model_iter_next(model, &iter));
-*/
-//	g_free(file);
 }
 void add_all(GtkButton *button)
 {

@@ -1196,6 +1196,8 @@ size_t write_curl_data(void *contents, size_t size, size_t nmemb, void *userp)
 void discogs_image_save()
 {
 	char *playing_file = get_playing_file();
+	if(playing_file == NULL)
+		return;
 	char *playing_album = get_playing_album();
 	char *dir = malloc(strlen(playing_file) + 1);
 	memcpy(dir, playing_file, strlen(playing_file) + 1);
@@ -1253,7 +1255,7 @@ int get_images_by_dir()
 		printf("no tag album art\n");
 	else if (S_ISREG(sbuf.st_mode))
 	{
-		printf("*FOUND tag album art\n");
+		//printf("*FOUND tag album art\n");
 		image = malloc(128 * sizeof(char*));
 		if (image_count < 0)
 			image_count = 0;
@@ -1299,7 +1301,7 @@ int get_images_by_dir()
 		//move image with name that matches "front" to the beginning
 		int i;
 		for(i = 0; i < image_count; i++) {
-			printf("%d %s\n", i, image[i]);
+			//printf("%d %s\n", i, image[i]);
 			if(i > 0 && strcasestr(image[i], "front") != NULL) {
 				printf("moving %s to spot 0\n", image[i]);
 				char temp[strlen(image[0]) + 1];
@@ -1342,6 +1344,8 @@ int get_images_by_dir()
 }
 int change_image(GtkButton *button)
 {
+	if(image_count <= 0)
+		return 0;
 	if (button == GTK_BUTTON(next_button))
 	{
 		if (image_index == (image_count - 1))
@@ -1401,13 +1405,13 @@ int resize_image(char *file)
 		imlib_context_set_image(image);
 		int w = imlib_image_get_width();
 		int h = imlib_image_get_height();
-		printf("width = %d\theight = %d\n", w, h);
+		//printf("width = %d\theight = %d\n", w, h);
 		float ratio = ((float) w) / h;
 		//printf("scale = %.2f\n", ratio);
 		if ((h > 960) || (w > 1150))
 		{
 			printf("\tRESIZED\n");
-			float f_w, f_h;
+			float f_w, f_h = 0;
 			if (w > 1150)//scale by width
 			{
 				f_w = 1150.0;
