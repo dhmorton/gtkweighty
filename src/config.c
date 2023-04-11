@@ -41,7 +41,7 @@ static GtkWidget *day_mspin[7];//minute spinner
 static GtkWidget *fade_in_spin, *wake_song_entry;
 static GtkAdjustment *start_adj, *end_adj;
 
-struct sleep_time sleep_fade;
+//struct sleep_time sleep_fade;
 struct alarm_time wake;
 struct config temp;
 

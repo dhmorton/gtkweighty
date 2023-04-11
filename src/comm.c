@@ -119,7 +119,7 @@ gboolean handle_data(GSocket* sock, GIOCondition condition, gpointer data)
 	while ((data_buf_len - bytes_parsed) > 0)
 	{
 		parse_data();
-		usleep(10);
+		usleep(50);
 	}
 
 	return TRUE;
@@ -1021,7 +1021,7 @@ void parse_config()
 void parse_progressbar_data()
 {
 	int permil = get_num_from_buf();
-	update_progressbar(permil);
+	//update_progressbar(permil);
 	buf_shift();
 	data_flag = '\0';
 }
