@@ -1,0 +1,3 @@
+/home/bob/c/weighty-vscode-cmake/gtkweighty/out/build/gcc_preset/CMakeFiles/gtkweighty.dir
+/home/bob/c/weighty-vscode-cmake/gtkweighty/out/build/gcc_preset/CMakeFiles/edit_cache.dir
+/home/bob/c/weighty-vscode-cmake/gtkweighty/out/build/gcc_preset/CMakeFiles/rebuild_cache.dir
