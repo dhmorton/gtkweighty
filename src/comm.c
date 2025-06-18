@@ -142,7 +142,7 @@ gssize check_for_data()
 			recv += ret;
 		}
 	}
-	if (recv != -1)
+	if (recv != 0)
 	{
 		if (data_buf[0] != '\0')
 		{
@@ -164,6 +164,9 @@ gssize recv_data(char *buf)
 {
 	GError *error = NULL;
 	gssize recv = g_socket_receive(sock, (gchar *) buf, BUFF, NULL, &error);
+	if(error) {
+	   g_error_free(error);
+	}
 	if (recv == 0)//connection is dead
 		quit();
 
@@ -978,7 +981,6 @@ void parse_remaining()
 	char remaining[16];
 	memset(remaining, 0, 16);
 	get_string_from_buf(remaining);
-	printf("remaining = %s\n", remaining);
 	set_left(remaining);
 	data_flag = '\0';
 	buf_shift();
@@ -1021,7 +1023,7 @@ void parse_config()
 void parse_progressbar_data()
 {
 	int permil = get_num_from_buf();
-	//update_progressbar(permil);
+	update_progressbar(permil);
 	buf_shift();
 	data_flag = '\0';
 }

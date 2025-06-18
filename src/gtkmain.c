@@ -38,6 +38,7 @@ static GtkWidget *win;
 static GtkWidget *up_but, *down_but, *album_but, *play_now_but;//right side info fields
 
 static void build_main_window(void);
+static int daemonize(void);
 //callbacks
 static void back(void);
 static void play(void);
@@ -117,7 +118,23 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-int read_config()
+int daemonize()
+{
+	//printf("daemonizing\n");
+	//doesn't work probably due to threading with gtk_main()
+	//daemon(1, 1);
+	//TODO
+	//open stderr to errorlog
+	//char *errorlog = "/home/bob/log/gtkweighty-error.log";
+	//freopen(errorlog, "w", stderr);
+	//open stdout to out.log
+	//char *logfile = "/home/bob/log/gtkweighty.log";
+	//freopen(logfile, "w", stdout);
+	//printf("test log");
+	//open stdin to /dev/null
+
+	return 0;
+}int read_config()
 {
 	FILE *fp;
 
@@ -423,7 +440,6 @@ void change_weight(GtkButton *button, GdkEventButton *event, gpointer func_data)
 			change = -10;
 	}
 	char *playing = get_playing_file();
-	printf("playing = %s\n", playing);
 	if (playing != NULL)
 	{
 		change_weight_cursong(change);

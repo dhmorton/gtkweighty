@@ -437,7 +437,7 @@ void build_info_tag_vbox(int active)
 	memcpy(segments[guesses], temp, strlen(temp) + 1);
 	guesses++;
 
-	//The first ones are always Artist, Title, Album, Genre, Track Number, Year and bit rate in that order even if blank
+	//The first ones are always Artist, Title, Album, Genre, Track Number, and Year in that order even if blank
 	char *basefields[] = { "Artist", "Title", "Album", "Genre", "Track Number", "Year" };
 	char *basetags[] = { playing_artist, playing_title, get_playing_album(), get_playing_genre(), get_playing_track(), get_playing_year()};
 	GtkWidget *frame[6 + num_tags];
@@ -1054,7 +1054,7 @@ int discogs_image_search()
     }
     memcpy(pr, "page=1", 7);
     pr += 7;
-    //printf("%s\n", request);
+    printf("%s\n", request);
 
 	curl_easy_setopt(curl, CURLOPT_URL, request);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_curl_data);
@@ -1252,7 +1252,9 @@ int get_images_by_dir()
 
 	//first check to see if there is an image from the tags waiting for us
 	if (stat("/tmp/weighty-tag-album-art.jpg", &sbuf) == -1)
-		printf("no tag album art\n");
+	{
+		//printf("no tag album art\n");
+	}
 	else if (S_ISREG(sbuf.st_mode))
 	{
 		//printf("*FOUND tag album art\n");
@@ -1344,6 +1346,7 @@ int get_images_by_dir()
 }
 int change_image(GtkButton *button)
 {
+	//no images so bail
 	if(image_count <= 0)
 		return 0;
 	if (button == GTK_BUTTON(next_button))
@@ -1410,20 +1413,20 @@ int resize_image(char *file)
 		//printf("scale = %.2f\n", ratio);
 		if ((h > 960) || (w > 1150))
 		{
-			printf("\tRESIZED\n");
+			//printf("\tRESIZED\n");
 			float f_w, f_h = 0;
 			if (w > 1150)//scale by width
 			{
 				f_w = 1150.0;
 				f_h = f_w / ratio;
+				printf("scaled h = %.2f\tscaled w = %.2f\n", f_h, f_w);
 			}
-			printf("scaled h = %.2f\tscaled w = %.2f\n", f_h, f_w);
 			if (h > 960)//if height is still too big scale again
 			{
 				f_h = 960.0;
 				f_w = f_h * ratio;
+				printf("scaled h = %.2f\tscaled w = %.2f\n", f_h, f_w);
 			}
-			printf("scaled h = %.2f\tscaled w = %.2f\n", f_h, f_w);
 			Imlib_Image scaled;
 			scaled = imlib_create_image((int) f_w, (int) f_h);
 			imlib_context_set_blend(1);
@@ -1440,6 +1443,7 @@ int resize_image(char *file)
 		printf("failed to load image %s\n", file);
 	return 0;
 }
+//free the memory for all of the album art and remove it from the gui
 void clear_images()
 {
 	int i;

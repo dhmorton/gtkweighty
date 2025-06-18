@@ -53,7 +53,7 @@ void redraw_canvas()
 		gint w = 0;
 		gint h = 0;
 		gtk_window_get_size(GTK_WINDOW(stats_win), &w, &h);
-		printf("w = %d\th = %d\n", w, h);
+		//printf("w = %d\th = %d\n", w, h);
 		gtk_widget_queue_draw_area(stats_win, 0, 0, w, h);
 	}
 }
