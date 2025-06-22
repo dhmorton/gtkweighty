@@ -27,6 +27,7 @@ static GtkWidget *weight_entry, *sticky_but, *pbar, *sleep_label, *art_entry, *t
 static int old_val = 0;//a bad hack for dragging the play position around
 static int sleeping = 0;//keep track of sleep countdown
 struct sleep_time sleep_fade;
+int update_volume = 1;
 
 GtkWidget* create_weight_entry()
 {
@@ -223,9 +224,8 @@ void set_left(char *left)
 }
 void set_volume(int volume)
 {
+	update_volume = 0;
 	gtk_range_set_value(GTK_RANGE(vol), volume);
-	char v[4];
-	snprintf(v, 4, "%d", volume);
 	gtk_widget_show_all(vol);
 }
 

@@ -134,7 +134,8 @@ int daemonize()
 	//open stdin to /dev/null
 
 	return 0;
-}int read_config()
+}
+int read_config()
 {
 	FILE *fp;
 
@@ -470,8 +471,13 @@ void info(GtkButton *button, GdkEventButton *event)
 }
 void change_volume(GtkWidget* widget)
 {
+	//Volume can be changed outside the program which causes the server to send a volume update
+	//Don't trigger the callback when the server sends an update or it fights back
+	if(update_volume == 0) {
+		update_volume = 1;
+		return;
+	}
 	int volume = gtk_range_get_value(GTK_RANGE(widget));
-	//printf("set vol = %d\n", volume);
 	char v[4];
 	itoa(volume, v);
 	char com[6];

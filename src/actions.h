@@ -21,6 +21,8 @@
 #define COLOR 4
 #define FULLPATH 5
 
+extern int update_volume;
+
 struct sleep_time {
 	int play;//minutes to play
 	int fade;//minutes to fade
