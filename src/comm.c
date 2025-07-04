@@ -679,7 +679,6 @@ void parse_playing()
 	set_playing_file(song);
 	data_flag = '\0';
 	set_playby(val.playby);
-	get_images_by_dir();
 	update_info_win();
 }
 void parse_list_of_fields()

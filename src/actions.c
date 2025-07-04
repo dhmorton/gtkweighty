@@ -23,7 +23,7 @@
 #include "actions.h"
 #include "myutils.h"
 
-static GtkWidget *weight_entry, *sticky_but, *pbar, *sleep_label, *art_entry, *tit_entry, *fade_spin, *play_spin, *playby_entry, *time_entry, *left_entry, *vol;
+static GtkWidget *weight_entry, *sticky_but, *pbar, *sleep_label, *art_entry, *tit_entry, *fade_spin, *play_spin, *playby_entry, *time_entry, *left_entry, *vol, *album_thumbnail;
 static int old_val = 0;//a bad hack for dragging the play position around
 static int sleeping = 0;//keep track of sleep countdown
 struct sleep_time sleep_fade;
@@ -137,6 +137,11 @@ GtkWidget* create_vol(GtkAdjustment *vadj)
 
 	return vol;
 }
+GtkWidget* create_album_thumbnail()
+{
+	album_thumbnail = gtk_image_new_from_file("/tmp/weighty-thumbnail-album-art.png");
+	return album_thumbnail;
+}
 void set_artist(char* artist)
 {
 	gtk_entry_set_text(GTK_ENTRY(art_entry), artist);
@@ -146,6 +151,16 @@ void set_title(char* title)
 {
 	gtk_entry_set_text((GtkEntry*) tit_entry, title);
 	gtk_widget_show_all(tit_entry);
+}
+void set_thumbnail()
+{
+	gtk_image_set_from_file(GTK_IMAGE(album_thumbnail), "/tmp/weighty-thumbnail-album-art.png");
+	gtk_widget_show_all(album_thumbnail);
+}
+void clear_thumbnail()
+{
+	gtk_image_set_from_icon_name(GTK_IMAGE(album_thumbnail), "image-missing", GTK_ICON_SIZE_MENU);
+	gtk_widget_show_all(album_thumbnail);
 }
 void set_sticky(int sticky)
 {
@@ -228,7 +243,6 @@ void set_volume(int volume)
 	gtk_range_set_value(GTK_RANGE(vol), volume);
 	gtk_widget_show_all(vol);
 }
-
 void play_row_now(GtkTreeView *tv, GtkTreePath *path)
 {
 	GtkTreeModel *model = gtk_tree_view_get_model(tv);

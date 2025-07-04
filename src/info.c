@@ -56,6 +56,7 @@ static void clear_amazon_image_search(void);
 static void playby_changed(GtkComboBox*, gpointer*);
 static int change_image(GtkButton*);
 static int resize_image(char*);
+static void thumbnail_image(char*);
 static int check_image(char*);
 static void clear_images(void);
 static void switch_page(GtkWidget*, gpointer, guint);
@@ -1236,6 +1237,7 @@ void clear_amazon_image_search()
 	artist_search_frame = NULL;
 	album_image_search_entry = NULL;
 	artist_image_search_entry = NULL;
+	printf("Get images by dir from clear_amazon_image_search()\n");
 	get_images_by_dir();
 }
 /*
@@ -1319,6 +1321,7 @@ int get_images_by_dir()
 	}
 	if (image_count > 0)
 	{
+		thumbnail_image(image[0]);
 		gtk_container_remove(GTK_CONTAINER(image_frame), album_cover);
 		if (resize_image(image[0]))
 			album_cover = gtk_image_new_from_file("/tmp/weighty-scaled-album-art.png");
@@ -1419,13 +1422,13 @@ int resize_image(char *file)
 			{
 				f_w = 1150.0;
 				f_h = f_w / ratio;
-				printf("scaled h = %.2f\tscaled w = %.2f\n", f_h, f_w);
+				//printf("scaled h = %.2f\tscaled w = %.2f\n", f_h, f_w);
 			}
 			if (h > 960)//if height is still too big scale again
 			{
 				f_h = 960.0;
 				f_w = f_h * ratio;
-				printf("scaled h = %.2f\tscaled w = %.2f\n", f_h, f_w);
+				//printf("scaled h = %.2f\tscaled w = %.2f\n", f_h, f_w);
 			}
 			Imlib_Image scaled;
 			scaled = imlib_create_image((int) f_w, (int) f_h);
@@ -1433,15 +1436,40 @@ int resize_image(char *file)
 			imlib_context_set_image(scaled);
 			imlib_blend_image_onto_image(image, 0, 0, 0, w, h, 0, 0, (int) f_w, (int) f_h);
 			imlib_save_image("/tmp/weighty-scaled-album-art.png");
-			imlib_free_image();
+			imlib_free_image_and_decache();
 			imlib_context_set_image(image);
-			imlib_free_image();
+			imlib_free_image_and_decache();
 			return 1;
 		}
 	}
 	else
 		printf("failed to load image %s\n", file);
 	return 0;
+}
+void thumbnail_image(char *file)
+{
+	Imlib_Image image;
+	image = imlib_load_image(file);
+	if(image == NULL)
+	{
+		printf("failed to load image for thumbnail %s\n", file);
+		return;
+	}
+	imlib_context_set_image(image);
+	int w = imlib_image_get_width();
+	int h = imlib_image_get_height();
+	float f_h = 60.0;
+	float f_w = ((float) w * f_h) / h;	
+	Imlib_Image scaled;
+	scaled = imlib_create_image((int) f_w, (int) f_h);
+	imlib_context_set_blend(1);
+	imlib_context_set_image(scaled);
+	imlib_blend_image_onto_image(image, 0, 0, 0, w, h, 0, 0, (int) f_w, (int) f_h);
+	imlib_save_image("/tmp/weighty-thumbnail-album-art.png");
+	imlib_free_image_and_decache();
+	imlib_context_set_image(image);
+	imlib_free_image_and_decache();
+	set_thumbnail();
 }
 //free the memory for all of the album art and remove it from the gui
 void clear_images()
@@ -1463,6 +1491,7 @@ void clear_images()
 	album_cover = gtk_image_new_from_icon_name("image-missing", GTK_ICON_SIZE_BUTTON);
 	gtk_container_add(GTK_CONTAINER(image_frame), album_cover);
 	gtk_widget_show_all(image_frame);
+	clear_thumbnail();
 }
 void update_info_win()
 {

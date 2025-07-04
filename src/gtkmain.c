@@ -232,6 +232,7 @@ int read_alarm_config()
 void build_main_window()
 {
 	GtkWidget *table, *left_vbox, *button_hbox, *close_hbox, *weight_hbox, *right_vbox;//main window containers
+	GtkWidget *album_thumbnail;
 	GtkWidget *info_but, *config_but, *pl_but;//left side buttons
 	GtkWidget *info_img, *config_img, *pl_img;//images for said buttons
 	static GtkAdjustment *vadj; //adjustment object attached to the volume widget
@@ -248,6 +249,9 @@ void build_main_window()
 
 	table = gtk_grid_new();
 	gtk_container_add(GTK_CONTAINER (win), table);
+
+	//thumbnail album art
+	album_thumbnail = create_album_thumbnail();
 
 	//three buttons on the left, info, config and playlist
 	left_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -361,13 +365,14 @@ void build_main_window()
 	gtk_box_pack_start(GTK_BOX (right_vbox), time_entry, FALSE, FALSE, 0);
 
 	//attach everything to the table
-	gtk_grid_attach(GTK_GRID (table), left_vbox, 0, 0, 1, 5);
-	gtk_grid_attach(GTK_GRID (table), vol, 1, 0, 1, 5);
-	gtk_grid_attach(GTK_GRID (table), art_entry, 2, 0, 2, 1);
-	gtk_grid_attach(GTK_GRID (table), tit_entry, 2, 1, 2, 1);
-	gtk_grid_attach(GTK_GRID (table), pbar, 2, 2, 2, 1);
-	gtk_grid_attach(GTK_GRID (table), button_hbox, 2, 3, 2, 1);
-	gtk_grid_attach(GTK_GRID (table), right_vbox, 4, 0, 1, 5);
+	gtk_grid_attach(GTK_GRID (table), album_thumbnail, 0, 0, 1, 5);
+	gtk_grid_attach(GTK_GRID (table), left_vbox, 1, 0, 1, 5);
+	gtk_grid_attach(GTK_GRID (table), vol, 2, 0, 1, 5);
+	gtk_grid_attach(GTK_GRID (table), art_entry, 3, 0, 2, 1);
+	gtk_grid_attach(GTK_GRID (table), tit_entry, 3, 1, 2, 1);
+	gtk_grid_attach(GTK_GRID (table), pbar, 3, 2, 2, 1);
+	gtk_grid_attach(GTK_GRID (table), button_hbox, 3, 3, 2, 1);
+	gtk_grid_attach(GTK_GRID (table), right_vbox, 5, 0, 1, 5);
 
 	//add the signal handling for the widgets
 	g_signal_connect(G_OBJECT (back_but), "clicked", G_CALLBACK (back), NULL);
@@ -471,7 +476,7 @@ void info(GtkButton *button, GdkEventButton *event)
 }
 void change_volume(GtkWidget* widget)
 {
-	//Volume can be changed outside the program which causes the server to send a volume update
+	//System volume can be changed by another process which causes the server to send a volume update
 	//Don't trigger the callback when the server sends an update or it fights back
 	if(update_volume == 0) {
 		update_volume = 1;

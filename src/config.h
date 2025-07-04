@@ -57,5 +57,6 @@ void send_alarm_config(void);
 void save_alarm_config(void);
 void send_phone_data(void);
 void close_config_win(void);
+void close_phone_win(void);
 
 #endif /* CONFIG_H_ */

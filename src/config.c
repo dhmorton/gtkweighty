@@ -24,6 +24,7 @@
 #include "models.h"
 #include "myutils.h"
 #include "actions.h"
+#include "phone.h"
 
 static GtkWidget *config_win = NULL;
 static GtkWidget *nb;
@@ -426,8 +427,11 @@ int launch_config(void)
 	//Transfer button
 	GtkWidget *phone_hbox4 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 1);
 	GtkWidget *phone_send_but = gtk_button_new_from_icon_name("send-to-symbolic", GTK_ICON_SIZE_MENU);
+	GtkWidget *phone_test_but = gtk_button_new_with_label("Test");
 	g_signal_connect(phone_send_but, "clicked", G_CALLBACK(send_phone_data), NULL);
+	g_signal_connect(phone_test_but, "clicked", G_CALLBACK(phone_test_ui), NULL);
 	gtk_box_pack_start(GTK_BOX(phone_hbox4), phone_send_but, TRUE, FALSE, 1);
+	gtk_box_pack_start(GTK_BOX(phone_hbox4), phone_test_but, TRUE, FALSE, 1);
 
 	//pack it all up into the phone vbox
 	GtkWidget *phone_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
