@@ -23,12 +23,20 @@
 #include "actions.h"
 #include "myutils.h"
 
-static GtkWidget *weight_entry, *sticky_but, *pbar, *sleep_label, *art_entry, *tit_entry, *fade_spin, *play_spin, *playby_entry, *time_entry, *left_entry, *vol, *album_thumbnail;
+static GtkWidget *weight_entry, *sticky_but, *pbar, *sleep_label, *art_entry, *tit_entry, *fade_spin, *play_spin;
+static GtkWidget *playby_entry, *time_entry, *left_entry, *vol, *album_thumbnail;
+static GtkGrid *grid;
 static int old_val = 0;//a bad hack for dragging the play position around
 static int sleeping = 0;//keep track of sleep countdown
 struct sleep_time sleep_fade;
 int update_volume = 1;
 
+GtkWidget* create_grid()
+{
+	GtkWidget *g = gtk_grid_new();
+	grid = GTK_GRID(g);
+	return g;
+}
 GtkWidget* create_weight_entry()
 {
 	weight_entry = gtk_entry_new();
@@ -151,6 +159,21 @@ void set_title(char* title)
 {
 	gtk_entry_set_text((GtkEntry*) tit_entry, title);
 	gtk_widget_show_all(tit_entry);
+}
+void highlight_title(int b)
+{
+	GtkStyleContext *context = gtk_widget_get_style_context(tit_entry);
+	if(b)
+	{
+		printf("highlight title for LYRICS: actions.c 168\n");
+		gtk_widget_set_name(tit_entry, "entry-lyrics");
+		gtk_style_context_add_class(context, "entry-lyrics");
+	}
+	else
+	{
+		gtk_widget_set_name(tit_entry, "entry-nolyrics");
+		gtk_style_context_add_class(context, "entry-nolyrics");
+	}
 }
 void set_thumbnail()
 {

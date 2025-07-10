@@ -35,9 +35,11 @@ static GtkWidget *tv, *file_tv, *pl_tv, *search_file_tv, *list_file_tv, *list_tv
 static GtkWidget *up_but_sel, *down_but_sel, *list_song_up_but, *list_song_down_but, *list_item_up_but, *list_item_down_but;
 static GtkWidget *add_all_but, *add_sel_but, *search_addall_but, *search_addsel_but;
 static GtkWidget *search_fields, *url_entry;//the combo box with the selected search field, also the text entry with the stream url to add
+static gulong open_list_item_handler_id;
 static int static_i = 0;
 static int dircount = 0;
 static char displayed_dir[1024];//the currently displayed directory
+
 //lists of the columns being displayed in the respective tag_tv windows
 tag_tv_columns *tag_col = NULL;
 tag_tv_columns *search_tag_col = NULL;
@@ -73,7 +75,7 @@ static void clear_fields();
 static void search(GtkEntry*);
 //list callbacks
 static void open_list(GtkWidget*);
-static int open_list_item(void);
+static int open_list_item(GtkTreeView*, gpointer);
 //stream callbacks
 static void add_stream(void);
 static void play_stream(void);
@@ -460,7 +462,7 @@ int launch_browser(char *mdir, int flag)//if the flag is nonzero file fetching i
 
 	//List signals
 	g_signal_connect(list_tree_tv, "cursor-changed", G_CALLBACK(open_list), NULL);
-	g_signal_connect(list_tv, "cursor-changed", G_CALLBACK(open_list_item), NULL);
+	open_list_item_handler_id = g_signal_connect(list_tv, "cursor-changed", G_CALLBACK(open_list_item), NULL);
 	g_signal_connect(list_tv, "row-activated", G_CALLBACK(play_list_now), NULL);
 	g_signal_connect(list_file_tv, "row-activated", G_CALLBACK(play_row_now), NULL);
 	g_signal_connect(list_song_up_but, "button_press_event", G_CALLBACK(change_weight_selected), NULL);
@@ -623,7 +625,6 @@ void create_tag_model_new(char flag, int num_fields, char **fields)
 }
 void create_browser_model()
 {
-	printf("create browser model\n");
 	GtkTreeStore *ts;
 	ts = gtk_tree_store_new(2, G_TYPE_STRING, GDK_TYPE_RGBA);
 	build_dir_tree(ts);
@@ -905,15 +906,15 @@ void populate_tag_tv_func_new(tag_data** data, int i, int num_fields, tag_tv_col
 	int field;
 	for (field = 0; field < num_fields; field++)
 	{
-		//int colnum = check_field((*data)[field].field, list_tag_col);FIXME
 		int colnum = check_field((*data)[field].field, col);
-		if (colnum != -1)
+		//skip lyrics and albumartist fields
+		if (colnum != -1 && strcasecmp((*data)[field].field, "unsyncedlyrics"))
 		{
 			gtk_list_store_set(GTK_LIST_STORE(model), &iter, colnum + 1, (*data)[field].tag, -1);
 			gtk_tree_view_column_set_visible(gtk_tree_view_get_column(GTK_TREE_VIEW(col->tv), colnum + 1), TRUE);
 		}
-		else
-			printf("couldn't find column %s\n", (*data)[field].field);
+		//else
+			//printf("couldn't find column %s\n", (*data)[field].field);
 	}
 	gtk_widget_show_all(col->tv);
 	clear_tag_data(data, num_fields);
@@ -1000,7 +1001,6 @@ void play_list_now(GtkWidget *tv)
 		gtk_tree_model_get_iter(model, &iter, path);
 		gchar *item;
 		gtk_tree_model_get(model, &iter, FILENAME, &item, -1);
-//		printf("list = %s\titem = %s\n", list, item);
 		if ((strcmp(list, "Album") == 0) || (strcmp(list, "Recent Albums") == 0)) {
 			memcpy(pcom, "TALB", 4);
 			pcom += 5;
@@ -1023,7 +1023,7 @@ void play_list_now(GtkWidget *tv)
 			{
 				gchar *uplist;
 				gtk_tree_model_get(lmodel, &topiter, 0, &uplist, -1);
-				printf("uplist = %s\n", uplist);
+				printf("play_list_now uplist = %s\n", uplist);
 				if (strcmp(uplist, "Recent Albums") == 0) {
 					memcpy(pcom, "TALB", 4);
 					pcom += 5;
@@ -1127,7 +1127,7 @@ void change_weight_selected(GtkButton *button, GdkEventButton *event)
 			gchar *file;
 			int weight;
 			gtk_tree_model_get(model, &iter, WEIGHT, &weight, FULLPATH, &file, -1);
-			printf("change weight %d %s\n", change, file);
+			// printf("change weight %d %s\n", change, file);
 			stats.count[weight]--;
 			weight += change;
 			if (weight > 100)
@@ -1476,19 +1476,22 @@ void open_list(GtkWidget *tv)
 	}
 	gtk_tree_view_column_set_title(gtk_tree_view_get_column(GTK_TREE_VIEW(list_tv), 3), list);
 	gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list_file_tv))));
+	//Clearing the list store triggers the callback on all rows after the one selected
+	//The best solution I found was to disconnect the signal handler from the list before clearing
+	g_signal_handler_disconnect(list_tv, open_list_item_handler_id);
 	gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list_tv))));
-	//gtk_tree_view_set_model(GTK_TREE_VIEW(list_tv), NULL);
-	//gtk_tree_view_set_model(GTK_TREE_VIEW(list_tv), create_standard_model(list_tv));
-	if (list_tag_col != NULL)
-		gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list_tag_col->tv))));
+	open_list_item_handler_id = g_signal_connect(list_tv, "cursor-changed", G_CALLBACK(open_list_item), NULL);
+	
+	//if (list_tag_col != NULL)
+		//gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list_tag_col->tv))));
 
 	memset(displayed_list, 0, 1024);
 }
-int open_list_item()
+
+int open_list_item(GtkTreeView *tv, gpointer gdata)
 {
 	//first get the type of list we're looking at
 	tag_tv_flag = 2;
-	clear_list_fields();
 	GtkTreeModel *lmodel;
 	GtkTreeIter liter;
 	gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(list_tree_tv)), &lmodel, &liter);
@@ -1505,7 +1508,7 @@ int open_list_item()
 		gchar *item;
 		gtk_tree_model_get(model, &iter, FILENAME, &item, -1);
 		char com[1024];
-		printf("list = %s\n", list);
+		printf("open_list_item: list = %s %s\n", list, item);
 		if ((strcmp(list, "Album") == 0) || (strcmp(list, "Recent Albums") == 0))
 			memcpy(com, "DTA", 3);
 		else if ((strcmp(list, "Artist") == 0) || (strcmp(list, "Recent Artists") == 0))
@@ -1519,7 +1522,6 @@ int open_list_item()
 			{
 				gchar *uplist;
 				gtk_tree_model_get(lmodel, &topiter, 0, &uplist, -1);
-				printf("uplist = %s\n", uplist);
 				if (strcmp(uplist, "Recent Albums") == 0)
 					memcpy(com, "DTA", 3);
 				else if (strcmp(uplist, "Recent Artists") == 0)
@@ -2006,7 +2008,19 @@ void create_dir_structure(GtkTreeStore *ts, GtkTreeIter *iter, char **list, int 
 		p = strrchr(p, '/');
 		p++;
 		gtk_tree_store_append(ts, iter, NULL);
-		gtk_tree_store_set(ts, iter, 0, p, 1, color_black.pixel, -1);
+		/*
+	 	* Some strings will not deign to be converted to utf8 for some reason
+		* If they won't, just put in what's there and ignore the warnings.
+		*/
+		GError *error = NULL;
+		gchar *gp = g_locale_to_utf8(p, -1, NULL, NULL, &error);
+		if(gp == NULL)
+		{
+			gtk_tree_store_set(ts, iter, 0, p, 1, color_black.pixel, -1);
+			g_error_free(error);
+		}
+		else
+			gtk_tree_store_set(ts, iter, 0, gp, 1, color_black.pixel, -1);
 		if (list[static_i] != NULL)
 			free(list[static_i]);
 		static_i++;

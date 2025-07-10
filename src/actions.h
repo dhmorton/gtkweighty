@@ -28,6 +28,7 @@ struct sleep_time {
 	int fade;//minutes to fade
 };
 
+GtkWidget* create_grid(void);
 GtkWidget* create_weight_entry(void);
 GtkWidget* create_sticky_but(void);
 GtkWidget* create_pbar(void);
@@ -40,9 +41,10 @@ GtkWidget* create_playby_entry(void);
 GtkWidget* create_time_entry(void);
 GtkWidget* create_left_entry(void);
 GtkWidget* create_vol(GtkAdjustment*);
-GtkWidget* create_album_thumbnail(void);
+GtkWidget* create_album_thumbnail();
 void set_artist(char*);
 void set_title(char*);
+void highlight_title(int);
 void set_thumbnail(void);
 void clear_thumbnail(void);
 void set_sticky(int);

@@ -96,13 +96,10 @@ void sticky_toggled(GtkCellRendererToggle *rend, gchar *path, GtkTreeModel *mode
 {
 	GtkTreeIter iter;
 	gboolean sticky;
-	printf("toggled\n");
 	g_object_get(G_OBJECT(rend), "active", &sticky, NULL);
-	printf("sticky = %d\n", sticky);
 	gtk_tree_model_get_iter_from_string(model, &iter, path);
 	gchar *file;
 	gtk_tree_model_get(model, &iter, FULLPATH, &file, -1);
-	printf("sticky %s\n", file);
 	if (file[0] == '/')
 	{
 		gtk_list_store_set(GTK_LIST_STORE(model), &iter, STICKY, ! sticky, -1);

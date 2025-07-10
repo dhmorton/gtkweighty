@@ -31,7 +31,7 @@ static int streaming = 0;
 static int first_time = 0;
 
 static GtkWidget *info_win, *track_tv, *nb, *top_hbox, *info_tag_vbox;
-static GtkWidget *lyrics_title_entry, *lyrics_artist_entry, *playby_entry, *lyrics_label, *lyrics_frame, *lyrics_vbox;
+static GtkWidget *lyrics_title_entry, *lyrics_artist_entry, *playby_entry, *lyrics_label, *lyrics_frame, *lyrics_vbox, *lyrics_scroll;
 static GtkWidget *image_frame, *album_cover, *next_button, *prev_button;
 static GtkWidget *track_up_but, *track_down_but;
 static GtkWidget *image_vbox;
@@ -42,6 +42,7 @@ static GtkWidget *artist_search_frame = NULL;
 static char** image;//an array of images to display
 static int image_count = -1;
 static int image_index = -1;
+char* lyrics_cur = NULL;
 char* discogs_token;
 
 static void build_info_tag_vbox(int);
@@ -54,6 +55,7 @@ static void save_tags(void);
 static void discogs_image_save(void);
 static void clear_amazon_image_search(void);
 static void playby_changed(GtkComboBox*, gpointer*);
+static void update_info_image(void);
 static int change_image(GtkButton*);
 static int resize_image(char*);
 static void thumbnail_image(char*);
@@ -201,14 +203,16 @@ int launch_info()
  */
 	lyrics_frame = gtk_frame_new(title);
 	gtk_widget_set_size_request(lyrics_frame, 500, -1);
-	GtkWidget *lyrics_scroll = gtk_scrolled_window_new(NULL, NULL);
+	lyrics_scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(lyrics_scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_container_add(GTK_CONTAINER(lyrics_frame), lyrics_scroll);
-	lyrics_label = gtk_label_new("");
+	lyrics_label = gtk_label_new(NULL);
 	gtk_label_set_selectable(GTK_LABEL(lyrics_label), TRUE);
 	gtk_container_add(GTK_CONTAINER(lyrics_scroll), lyrics_label);
+	set_lyrics();
 	//gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(lyrics_scroll), lyrics_label);
 
+	/*
 	lyrics_title_entry = gtk_entry_new();
 	if (playing_title != NULL)
 		gtk_entry_set_text(GTK_ENTRY(lyrics_title_entry), playing_title);
@@ -222,6 +226,7 @@ int launch_info()
 	gtk_editable_set_editable(GTK_EDITABLE(lyrics_artist_entry), TRUE);
 	GtkWidget *lyrics_artist_frame = gtk_frame_new("Artist");
 	gtk_container_add(GTK_CONTAINER(lyrics_artist_frame), lyrics_artist_entry);
+	*/
 
 	GtkWidget *lyrics_quit_but = gtk_button_new();
 	GtkWidget *lyrics_quit_img = gtk_image_new_from_icon_name("window-close", GTK_ICON_SIZE_BUTTON);
@@ -233,13 +238,13 @@ int launch_info()
 		lyrics_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_box_pack_start(GTK_BOX(lyrics_vbox), lyrics_frame, TRUE, TRUE, 2);
 	gtk_box_pack_end(GTK_BOX(lyrics_vbox), lyrics_button_hbox, FALSE, FALSE, 2);
-	gtk_box_pack_end(GTK_BOX(lyrics_vbox), lyrics_artist_frame, FALSE, FALSE, 2);
-	gtk_box_pack_end(GTK_BOX(lyrics_vbox), lyrics_title_frame, FALSE, FALSE, 2);
+	//gtk_box_pack_end(GTK_BOX(lyrics_vbox), lyrics_artist_frame, FALSE, FALSE, 2);
+	// gtk_box_pack_end(GTK_BOX(lyrics_vbox), lyrics_title_frame, FALSE, FALSE, 2);
 
 	//signals for the lyrics tab
 	g_signal_connect(G_OBJECT(lyrics_quit_but), "clicked", G_CALLBACK (close_info_win), NULL);
-	g_signal_connect(G_OBJECT(lyrics_artist_entry), "activate", G_CALLBACK (lyrics_search), NULL);
-	g_signal_connect(G_OBJECT(lyrics_title_entry), "activate", G_CALLBACK (lyrics_search), NULL);
+	// g_signal_connect(G_OBJECT(lyrics_artist_entry), "activate", G_CALLBACK (lyrics_search), NULL);
+	// g_signal_connect(G_OBJECT(lyrics_title_entry), "activate", G_CALLBACK (lyrics_search), NULL);
 /*
  * TRACKS TAB
  */
@@ -313,10 +318,7 @@ int launch_info()
 		GtkWidget *image_save_image = gtk_image_new_from_icon_name("object-select-symbolic", GTK_ICON_SIZE_MENU);
 		gtk_container_add(GTK_CONTAINER(image_save_button), image_save_image);
 
-		//GtkWidget *cancel_button = gtk_button_new();
-		//GtkWidget *cancel_image = gtk_image_new_from_stock("gtk-cancel", GTK_ICON_SIZE_MENU);
 		GtkWidget *cancel_button = gtk_button_new_with_mnemonic("_Cancel");
-		//gtk_container_add(GTK_CONTAINER(cancel_button), cancel_image);
 
 		GtkWidget *image_button_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
 		gtk_box_pack_start(GTK_BOX(image_button_hbox), cancel_button, FALSE, FALSE, 2);
@@ -684,9 +686,21 @@ void change_info_tv_weight(char* file, int change)
 		}
 	}
 }
-void set_lyrics(char *lyrics)
+void save_lyrics(char* lyrics)
 {
-	gtk_label_set_text(GTK_LABEL(lyrics_label), lyrics);
+	lyrics_cur = malloc(strlen(lyrics) + 1);
+	memset(lyrics_cur, 0, strlen(lyrics) + 1);
+	strncpy(lyrics_cur, lyrics, strlen(lyrics));
+}
+void set_lyrics()
+{
+	if(lyrics_cur == NULL)
+	{
+		highlight_title(0);
+		return;
+	}
+	gtk_label_set_text(GTK_LABEL(lyrics_label), lyrics_cur);
+	highlight_title(1);
 	gtk_widget_show_all(lyrics_label);
 }
 /*
@@ -922,7 +936,6 @@ void save_tags()
 		} while(gtk_tree_model_iter_next(model, &iter));
 	}
 }
-
 int clear_info()
 {
 	if (info_win == NULL)
@@ -940,6 +953,11 @@ int clear_info()
 		GtkWidget *widget = list->data;
 		gtk_widget_destroy(widget);
 		list = list->next;
+	}
+	if(lyrics_cur != NULL)
+	{
+		free(lyrics_cur);
+		lyrics_cur = NULL;
 	}
 	return 0;
 }
@@ -1243,10 +1261,15 @@ void clear_amazon_image_search()
 /*
  * IMAGE FUNCTIONS
  */
+//Find all of the album images for the song
+//using images in the album directory
+//and any image found in a tag
+//and store them in an array.
+//Also sets the thumbnail image 
 int get_images_by_dir()
 {
 	char *playing_file = get_playing_file();
-	if ((info_win == NULL) || (playing_file == NULL) || (streaming))
+	if (/*(info_win == NULL) || */(playing_file == NULL) || (streaming))
 		return -1;
 	clear_images();
 
@@ -1307,7 +1330,6 @@ int get_images_by_dir()
 		for(i = 0; i < image_count; i++) {
 			//printf("%d %s\n", i, image[i]);
 			if(i > 0 && strcasestr(image[i], "front") != NULL) {
-				printf("moving %s to spot 0\n", image[i]);
 				char temp[strlen(image[0]) + 1];
 				strcpy(temp, image[0]);
 				free(image[0]);
@@ -1319,9 +1341,21 @@ int get_images_by_dir()
 			}
 		}
 	}
-	if (image_count > 0)
+	//place the images in the right spot
+	if(image_count > 0)
 	{
 		thumbnail_image(image[0]);
+	}
+	update_info_image();
+	return 0;
+}
+//Updates the images for the info window
+void update_info_image()
+{
+	if(info_win == NULL)
+		return;
+	if (image_count > 0)
+	{
 		gtk_container_remove(GTK_CONTAINER(image_frame), album_cover);
 		if (resize_image(image[0]))
 			album_cover = gtk_image_new_from_file("/tmp/weighty-scaled-album-art.png");
@@ -1345,7 +1379,7 @@ int get_images_by_dir()
 		image_index = -1;
 		image_count = -1;
 	}
-	return 0;
+
 }
 int change_image(GtkButton *button)
 {
@@ -1487,10 +1521,13 @@ void clear_images()
 		free(image);
 	image_count = -1;
 	image_index = -1;
-	gtk_container_remove(GTK_CONTAINER(image_frame), album_cover);
-	album_cover = gtk_image_new_from_icon_name("image-missing", GTK_ICON_SIZE_BUTTON);
-	gtk_container_add(GTK_CONTAINER(image_frame), album_cover);
-	gtk_widget_show_all(image_frame);
+	if(info_win != NULL)
+	{
+		gtk_container_remove(GTK_CONTAINER(image_frame), album_cover);
+		album_cover = gtk_image_new_from_icon_name("image-missing", GTK_ICON_SIZE_BUTTON);
+		gtk_container_add(GTK_CONTAINER(image_frame), album_cover);
+		gtk_widget_show_all(image_frame);
+	}
 	clear_thumbnail();
 }
 void update_info_win()
@@ -1501,8 +1538,7 @@ void update_info_win()
 		{
 			gtk_window_resize(GTK_WINDOW(info_win), 100, 100);
 			launch_info();
-			if (gtk_notebook_get_current_page(GTK_NOTEBOOK(nb)) == 1)
-				lyrics_search();
+			set_lyrics();
 		}
 	}
 }

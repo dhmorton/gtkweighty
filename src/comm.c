@@ -621,19 +621,13 @@ void parse_song_data()
 			song_total_holder = -1;
 			buf_shift();
 			if (data_flag == 'F')
-			{
 				set_cursor_on_playing_file(0);
-			}
 			else if (data_flag == 'Q')
-			{
 				clear_search_fields();
-			}
 			else if (data_flag == 'A')
 				set_cursor_on_playing();
 			else if (data_flag == 'D')
-			{
 				set_cursor_on_playing_file(2);
-			}
 			else if (data_flag == 'I')
 				highlight_track();
 		}
@@ -679,6 +673,7 @@ void parse_playing()
 	set_playing_file(song);
 	data_flag = '\0';
 	set_playby(val.playby);
+	get_images_by_dir();
 	update_info_win();
 }
 void parse_list_of_fields()
@@ -748,7 +743,7 @@ int parse_tag_tv_data(tag_data** data)
 			translate_field(fld, field);
 			(*data)[j].field = malloc(strlen(field) + 1);
 			memcpy((*data)[j].field, field, strlen(field) + 1);
-			char tag[4096];
+			char tag[10240];
 			int len = get_string_from_buf(tag);
 			(*data)[j].tag = malloc(len);
 			memcpy((*data)[j].tag, tag, len);
@@ -872,6 +867,11 @@ int parse_tag_data()
 			{
 //				printf("%s = %s\n", field, tag);
 				set_playing_year(tag);
+			}
+			else if (! strcasecmp(field, "unsyncedlyrics"))
+			{
+				//printf("FOUND LYRICS\n%s\n", tag);
+				save_lyrics(tag);
 			}
 			else
 			{

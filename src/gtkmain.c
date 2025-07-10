@@ -244,10 +244,10 @@ void build_main_window()
 	win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_widget_set_name(win, "weighty-main");
 	gtk_window_set_title(GTK_WINDOW (win), "GtkWeighty");
-	gtk_window_set_default_size(GTK_WINDOW (win), 550, 50);
+	gtk_window_set_default_size(GTK_WINDOW (win), 610, 50);
 	g_signal_connect(G_OBJECT (win), "destroy", G_CALLBACK (quit), NULL);
 
-	table = gtk_grid_new();
+	table = create_grid();
 	gtk_container_add(GTK_CONTAINER (win), table);
 
 	//thumbnail album art
@@ -365,14 +365,14 @@ void build_main_window()
 	gtk_box_pack_start(GTK_BOX (right_vbox), time_entry, FALSE, FALSE, 0);
 
 	//attach everything to the table
-	gtk_grid_attach(GTK_GRID (table), album_thumbnail, 0, 0, 1, 5);
-	gtk_grid_attach(GTK_GRID (table), left_vbox, 1, 0, 1, 5);
-	gtk_grid_attach(GTK_GRID (table), vol, 2, 0, 1, 5);
-	gtk_grid_attach(GTK_GRID (table), art_entry, 3, 0, 2, 1);
-	gtk_grid_attach(GTK_GRID (table), tit_entry, 3, 1, 2, 1);
-	gtk_grid_attach(GTK_GRID (table), pbar, 3, 2, 2, 1);
-	gtk_grid_attach(GTK_GRID (table), button_hbox, 3, 3, 2, 1);
-	gtk_grid_attach(GTK_GRID (table), right_vbox, 5, 0, 1, 5);
+	gtk_grid_attach(GTK_GRID (table), album_thumbnail, 0, 0, 1, 4);
+	gtk_grid_attach(GTK_GRID (table), left_vbox, 1, 0, 1, 4);
+	gtk_grid_attach(GTK_GRID (table), vol, 2, 0, 1, 4);
+	gtk_grid_attach(GTK_GRID (table), art_entry, 3, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID (table), tit_entry, 3, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID (table), pbar, 3, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID (table), button_hbox, 3, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID (table), right_vbox, 4, 0, 1, 4);
 
 	//add the signal handling for the widgets
 	g_signal_connect(G_OBJECT (back_but), "clicked", G_CALLBACK (back), NULL);
@@ -394,10 +394,10 @@ void build_main_window()
 
 
 	gtk_widget_show_all(win);
-	printf("artist height = %d\n", gtk_widget_get_allocated_height(art_entry));
-	printf("title height = %d\n", gtk_widget_get_allocated_height(tit_entry));
-	printf("pbar height = %d\n", gtk_widget_get_allocated_height(pbar));
-	printf("button height = %d\n", gtk_widget_get_allocated_height(button_hbox));
+	// printf("artist height = %d\n", gtk_widget_get_allocated_height(art_entry));
+	// printf("title height = %d\n", gtk_widget_get_allocated_height(tit_entry));
+	// printf("pbar height = %d\n", gtk_widget_get_allocated_height(pbar));
+	// printf("button height = %d\n", gtk_widget_get_allocated_height(button_hbox));
 }
 /*
  * CALLBACKS
